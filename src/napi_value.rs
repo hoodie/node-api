@@ -14,6 +14,66 @@ pub trait FromNapiValues: Sized {
     fn from_napi_values(napi::NapiEnv, napi::NapiValue, &[napi::NapiValue]) -> Result<Self>;
 }
 
+#[cfg(feature="json")]
+mod value_type {
+    use serde_json::Value;
+    use serde_json::Number;
+    use serde_json::Map;
+
+    use super::*;
+
+    impl IntoNapiValue for Number {
+        fn into_napi_value(self, env: napi::NapiEnv) -> Result<napi::NapiValue> {
+            napi::create_number(env, self.as_f64().unwrap_or(0.0))
+        }
+    }
+
+    //impl IntoNapiValue for Vec<Value> {
+    //    fn into_napi_value(self, env: napi::NapiEnv) -> Result<napi::NapiValue> {
+    //        let new = self.into_iter().map(|v|v.into_napi_value(env)).collect::<Vec<_>>();
+    //        let array = napi::array_with_length(env, self.len())?;
+
+    //        for (index, elem) in self.into_iter().map(|v| v.into_napi_value(env)).enumerate() {
+    //            napi::set_element(env, array, index, elem?)?;
+    //        }
+
+    //        Ok(array)
+
+    //    }
+    //}
+
+    impl IntoNapiValue for Map<String, Value> {
+        fn into_napi_value(self, env: napi::NapiEnv) -> Result<napi::NapiValue> {
+            let object = napi::create_object(env)?;
+
+            for (key, value) in self.into_iter().map(|(k, v)| (k, v.into_napi_value(env))) {
+                napi::set_named_property(env, object, &key, value?)?; // this might be unsafe
+            }
+
+            Ok(object)
+        }
+    }
+
+    impl IntoNapiValue for Value {
+        fn into_napi_value(self, env: napi::NapiEnv) -> Result<napi::NapiValue> {
+            match self {
+                Value::Null => napi::get_undefined(env),
+                Value::Bool(b) => napi::get_boolean(env, b),
+                Value::Number(n) => n.into_napi_value(env),
+                Value::String(s) => napi::create_string_utf8(env, s),
+                Value::Array(v) => v.into_napi_value(env),
+                Value::Object(o) => o.into_napi_value(env)
+            }
+        }
+    }
+
+}
+
+
+
+
+
+
 
 macro_rules! impl_from_napi_values {
     ($t:ty, $from:expr, $get_value:expr) => {

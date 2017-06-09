@@ -2,6 +2,8 @@
 
 extern crate node_api_sys;
 extern crate futures;
+#[cfg(feature="json")]
+extern crate serde_json;
 
 mod napi;
 mod napi_value;
@@ -37,8 +39,30 @@ pub static REGISTER_FOO: extern "C" fn() = {
 };
 }}
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {}
+#[macro_export]
+macro_rules! function {
+    ($env:ident->$name:ident($takes:tt) $content:block ) => {
+        create_function($env, stringify!(name), |_: NapiEnv, _: NapiValue, $takes| $content )
+        .expect("error creating function")
+    };
+}
+
+#[macro_export]
+macro_rules! register {
+    ($module_name:ident
+    $(export $function:ident;)*) => {
+        napi_module!(stringify!($module_name), register);
+        #[no_mangle]
+        pub extern "C" fn register(env: NapiEnv, exports: NapiValue, _module: NapiValue, _priv: *mut std::os::raw::c_void) {
+
+            $( set_named_property(
+                env,
+                exports,
+                stringify!($function),
+                create_function(env, stringify!($function), $function)
+                .expect(stringify!(error creating function: $function))
+            ).expect(stringify!(error attaching function: $function));)*
+
+        }
+    }
 }

@@ -10,13 +10,13 @@ pub const NAPI_AUTO_LENGTH: ::std::os::raw::c_int = -1;
 pub struct napi_env__ {
     _unused: [u8; 0],
 }
-pub type napi_env = usize;
+pub type napi_env = *mut napi_env__;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct napi_value__ {
     _unused: [u8; 0],
 }
-pub type napi_value = usize;
+pub type napi_value = *mut napi_value__;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct napi_ref__ {
@@ -423,8 +423,7 @@ extern "C" {
 extern "C" {
     pub fn napi_create_function(env: napi_env,
                                 utf8name: *const ::std::os::raw::c_char,
-                                length: usize,
-                                cb: napi_callback,
+                                length: usize, cb: napi_callback,
                                 data: *mut ::std::os::raw::c_void,
                                 result: *mut napi_value) -> napi_status;
 }

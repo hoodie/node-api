@@ -37,8 +37,3 @@ pub static REGISTER_FOO: extern "C" fn() = {
 };
 }}
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {}
-}

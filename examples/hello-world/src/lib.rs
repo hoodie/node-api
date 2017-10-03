@@ -29,7 +29,7 @@ impl FromNapiValues for HelloArgs {
 
 struct HelloReturn {
     pub foo: String,
-    pub bar: u64,
+    pub bar: i64,
 }
 
 impl IntoNapiValue for HelloReturn {
